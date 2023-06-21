@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">AutomativeDemo</string>
+    <string name="mapbox_access_token">pk.eyJ1Ijoib21yaW1hcHBvIiwiYSI6ImNraTRvZGR6YjA0ZHYycW9scnc4eHcyYzEifQ.LFLoSz3baPVpPrViBeK3QA</string>
+</resources>
