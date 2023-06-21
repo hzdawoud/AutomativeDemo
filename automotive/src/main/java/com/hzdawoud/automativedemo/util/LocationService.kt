@@ -1,28 +1,30 @@
 package com.hzdawoud.automativedemo.util
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.widget.Toast
+import com.google.android.material.snackbar.Snackbar
 
 class LocationService(private val context: Context) {
     private var locationManager: LocationManager? = null
     private var locationListener: LocationListener? = null
 
     private var lastLocation: Location? = null
-    private val distanceThreshold = 2.0
+    private val distanceThreshold = 1.0
 
     @SuppressLint("MissingPermission")
-    fun requestLocationUpdates(callback: (Location) -> Unit) {
+    fun requestLocationUpdates(callback: (Pair<Location?, Location>) -> Unit) {
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         locationListener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
                 if (isLocationSignificantlyChanged(location)) {
-                    callback(location)
+                    callback(Pair(lastLocation, location))
                     onLocationChangedHandler(location)
                 }
             }
@@ -60,8 +62,6 @@ class LocationService(private val context: Context) {
         val latitude = location.latitude
         val longitude = location.longitude
 
-        Toast.makeText(context, "Latitude: $latitude, Longitude: $longitude", Toast.LENGTH_SHORT)
-            .show()
         println("Hzm: Latitude: $latitude, Longitude: $longitude")
 
         lastLocation = location

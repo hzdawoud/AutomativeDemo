@@ -1,12 +1,13 @@
 package com.hzdawoud.automativedemo
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Bundle
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.hzdawoud.automativedemo.util.ActivityPermissionService
@@ -21,6 +22,10 @@ import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListene
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 
 class MainActivity : AppCompatActivity() {
@@ -29,9 +34,10 @@ class MainActivity : AppCompatActivity() {
 
     private val permissionService = ActivityPermissionService(this) { isGranted ->
         Log.d(TAG, "location permissions isGranted: $isGranted")
-        onMapReady()
-        locationService = LocationService(this)
-        observeAndUpdate()
+        onMapReady {
+            locationService = LocationService(this)
+            observeAndUpdate()
+        }
     }
 
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
@@ -56,12 +62,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var mapView: MapView
+    private lateinit var previousLocation: TextView
+    private lateinit var currentLocation: TextView
     private lateinit var navigationLocationProvider: NavigationLocationProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         mapView = findViewById(R.id.map_view)
+        previousLocation = findViewById(R.id.previousLocation)
+        currentLocation = findViewById(R.id.currentLocation)
         checkPermissions()
 
         println("Hzm Availability ${isGooglePlayServicesAvailable(this)}")
@@ -73,7 +83,7 @@ class MainActivity : AppCompatActivity() {
         return resultCode == ConnectionResult.SUCCESS
     }
 
-    private fun onMapReady() {
+    private fun onMapReady(onCompleteCallback: () -> Unit) {
         mapView.getMapboxMap().apply {
             setCamera(
                 CameraOptions.Builder()
@@ -85,6 +95,7 @@ class MainActivity : AppCompatActivity() {
             ) {
                 initLocationComponent()
                 setupGesturesListener()
+                onCompleteCallback.invoke()
             }
         }
     }
@@ -127,14 +138,33 @@ class MainActivity : AppCompatActivity() {
         observeAndUpdate()
     }
 
+    @SuppressLint("SimpleDateFormat", "SetTextI18n")
     private fun observeAndUpdate() {
+        val df: DateFormat = SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss", Locale.getDefault())
+
         if (this::locationService.isInitialized) {
             locationService.requestLocationUpdates() {
                 if (this::navigationLocationProvider.isInitialized) {
-                    Log.d("location", "${it.longitude} ${it.latitude}")
+                    Log.d("location", "${it.second.longitude} ${it.second.latitude}")
                     navigationLocationProvider.changePosition(
-                        it
+                        it.second
                     )
+                    it.first?.let { pLocation ->
+                        previousLocation.text =
+                            "Previous Location: Lat:${pLocation.latitude}, Lng:${pLocation.longitude}  ${
+                                df.format(
+                                    Calendar.getInstance().time
+                                )
+                            }"
+                    }
+                    it.second.let { cLocation ->
+                        currentLocation.text =
+                            "Current Location: Lat:${cLocation.latitude}, Lng:${cLocation.longitude}  ${
+                                df.format(
+                                    Calendar.getInstance().time
+                                )
+                            }"
+                    }
                 }
             }
         }
