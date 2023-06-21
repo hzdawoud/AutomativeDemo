@@ -9,16 +9,18 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.widget.Toast
 import com.google.android.material.snackbar.Snackbar
+import com.hzdawoud.automativedemo.data.PreviousLocation
+import java.util.Calendar
 
 class LocationService(private val context: Context) {
     private var locationManager: LocationManager? = null
     private var locationListener: LocationListener? = null
 
-    private var lastLocation: Location? = null
+    private var lastLocation: PreviousLocation? = null
     private val distanceThreshold = 1.0
 
     @SuppressLint("MissingPermission")
-    fun requestLocationUpdates(callback: (Pair<Location?, Location>) -> Unit) {
+    fun requestLocationUpdates(callback: (Pair<PreviousLocation?, Location>) -> Unit) {
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         locationListener = object : LocationListener {
@@ -50,10 +52,13 @@ class LocationService(private val context: Context) {
 
     private fun isLocationSignificantlyChanged(location: Location): Boolean {
         lastLocation?.let {
-            val distance = location.distanceTo(it)
+            val distance = location.distanceTo(it.location)
             return distance > distanceThreshold
         } ?: kotlin.run {
-            lastLocation = location
+            lastLocation = lastLocation?.copy(
+                location = location,
+                timestamp = Calendar.getInstance().time
+            )
             return true
         }
     }
@@ -64,7 +69,10 @@ class LocationService(private val context: Context) {
 
         println("Hzm: Latitude: $latitude, Longitude: $longitude")
 
-        lastLocation = location
+        lastLocation = lastLocation?.copy(
+            location = location,
+            timestamp = Calendar.getInstance().time
+        )
     }
 
     fun stopLocationUpdates() {

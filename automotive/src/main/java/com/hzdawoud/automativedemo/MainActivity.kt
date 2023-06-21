@@ -151,9 +151,9 @@ class MainActivity : AppCompatActivity() {
                     )
                     it.first?.let { pLocation ->
                         previousLocation.text =
-                            "Previous Location: Lat:${pLocation.latitude}, Lng:${pLocation.longitude}  ${
+                            "Previous Location: Lat:${pLocation.location.latitude}, Lng:${pLocation.location.longitude}  ${
                                 df.format(
-                                    Calendar.getInstance().time
+                                    pLocation.timestamp
                                 )
                             }"
                     }
